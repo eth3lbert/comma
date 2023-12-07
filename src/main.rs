@@ -9,8 +9,9 @@ use std::{
 use clap::crate_version;
 use clap::Parser;
 
-fn pick(picker: &str, derivations: &[&str]) -> Option<String> {
+fn pick(picker: &str, derivations: &[&str], picker_args: &[String]) -> Option<String> {
     let mut picker_process = Command::new(picker)
+        .args(picker_args)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()
@@ -105,7 +106,7 @@ fn main() -> ExitCode {
         .collect();
 
     let choice = if attrs.len() > 1 {
-        match pick(&args.picker, &attrs) {
+        match pick(&args.picker, &attrs, &args.picker_args) {
             Some(x) => x,
             None => return ExitCode::FAILURE,
         }
@@ -155,6 +156,9 @@ struct Opt {
     #[clap(long, env = "COMMA_PICKER", default_value = "fzy")]
     picker: String,
 
+    #[clap(long, num_args=0..)]
+    picker_args: Vec<String>,
+
     #[clap(long, env = "COMMA_NIXPKGS_FLAKE", default_value = "nixpkgs")]
     nixpkgs_flake: String,
 
@@ -167,6 +171,6 @@ struct Opt {
     print_package: bool,
 
     /// Command to run
-    #[clap(required_unless_present = "update", name = "cmd")]
+    #[clap(required_unless_present = "update", name = "cmd", allow_hyphen_values = true)]
     cmd: Vec<String>,
 }
